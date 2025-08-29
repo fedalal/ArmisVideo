@@ -26,3 +26,4 @@ while True:
     frame_counter += 1
 
     time.sleep(1)  # ждем 1 секунду
+
