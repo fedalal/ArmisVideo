@@ -47,6 +47,40 @@ with tab1:
             interval = st.number_input("Интервал опроса камеры (сек)",  min_value=1, value=cam["poll_interval_s"], key=f"int_{cam['id']}")
             enabled = st.checkbox("Камера используется", value=cam["enabled"], key=f"enabled_{cam['id']}")
 
+            st.markdown("---")
+
+            # 🔹 Управление показом: snapshot или stream
+            key_state = f"stream_active_{cam['id']}"
+            if key_state not in st.session_state:
+                st.session_state[key_state] = False  # по умолчанию поток выключен
+
+            if not st.session_state[key_state]:
+                # показываем snapshot
+                st.markdown(
+                    f"""
+                            <img src="{API_URL}/cameras/{cam['id']}/snapshot"
+                                 width="640" height="480"
+                                 style="border:1px solid #ccc;"/>
+                            """,
+                    unsafe_allow_html=True
+                )
+                if st.button("▶️ Запустить поток", key=f"start_stream_{cam['id']}"):
+                    st.session_state[key_state] = True
+                    st.rerun()
+            else:
+                # показываем stream
+                st.markdown(
+                    f"""
+                            <img src="{API_URL}/cameras/{cam['id']}/stream"
+                                 width="640" height="480"
+                                 style="border:1px solid #ccc;"/>
+                            """,
+                    unsafe_allow_html=True
+                )
+                if st.button("⏹ Остановить поток", key=f"stop_stream_{cam['id']}"):
+                    st.session_state[key_state] = False
+                    st.rerun()
+
             if st.button("💾 Сохранить", key=f"save_{cam['id']}"):
                 payload = {"name": name, "rtsp_url": rtsp, "poll_interval_s": interval, "enabled": enabled}
                 requests.put(f"{API_URL}/cameras/{cam['id']}", json=payload)
