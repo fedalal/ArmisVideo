@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="grid">
+<section>
+<h2>Камеры</h2>
+<table>
+<tr><th>ID</th><th>Имя</th><th>RTSP</th><th>Интервал</th><th>Вкл</th></tr>
+{% for c in cams %}
+<tr><td>{{ c.id }}</td><td>{{ c.name }}</td><td class="muted">{{ c.rtsp_url }}</td><td>{{ c.poll_interval_s }}s</td><td>{{ '✓' if c.enabled else '—' }}</td></tr>
+{% endfor %}
+</table>
+</section>
+<section>
+<h2>Рабочие места</h2>
+<table>
+<tr><th>ID</th><th>Имя</th><th>Камера</th><th>ROI</th></tr>
+{% for r in ws %}
+<tr><td>{{ r.id }}</td><td>{{ r.name }}</td><td>{{ r.camera_id }}</td><td>{{ r.x }},{{ r.y }},{{ r.w }},{{ r.h }}</td></tr>
+{% endfor %}
+</table>
+</section>
+</div>
+<section>
+<h2>Последние события</h2>
+<table>
+<tr><th>ID</th><th>WS</th><th>Время</th><th>Триггер</th><th>Людей</th><th>Thumb</th></tr>
+{% for f in frames %}
+<tr><td>{{ f.id }}</td><td>{{ f.workstation_id }}</td><td>{{ f.captured_at }}</td><td><span class="pill">{{ f.trigger }}</span></td><td>{{ f.people_count }}</td><td>{% if f.thumb_path %}<img src="/thumbs/{{ f.thumb_path.split('/')[-1] }}">{% endif %}</td></tr>
+{% endfor %}
+</table>
+</section>
+<script>
+// Simple websocket to request presence snapshot (will show in console)
+const ws = new WebSocket((location.protocol==='https:'?'wss://':'ws://') + location.host + '/ws/presence');
+ws.addEventListener('open', ()=> ws.send('request'));
+ws.addEventListener('message', ev => console.log('Presence:', ev.data));
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %} {% block content %}
+<h2>Новое рабочее место</h2>
+<form id="ws-form">
+<label>Имя: <input name="name" required></label><br>
+<label>Камера: <select name="camera_id" id="camera-select"></select></label><br>
+<p>Рисуйте ROI на превью (координаты будут относительные к показанному превью)</p>
+<video id="preview" autoplay muted playsinline style="max-width:640px;border:1px solid #ccc"></video>
+<canvas id="canvas" style="position:relative;left:0;top:0"></canvas>
+<input type="hidden" name="x"><input type="hidden" name="y"><input type="hidden" name="w"><input type="hidden" name="h">
+<button type="submit">Создать</button>
+</form>
+<script>
+(async ()=>{
+ const cams = await (await fetch('/api/cameras/')).json();
+ const sel = document.getElementById('camera-select');
+ cams.forEach(c=>{ let o=document.createElement('option'); o.value=c.id; o.text=c.name; sel.appendChild(o); });
+})();
+
+// Simple ROI drawing on canvas overlay (no real video stream for RTSP in browser)
+const video = document.getElementById('preview');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+function fit(){ canvas.width = video.clientWidth; canvas.height = video.clientHeight; canvas.style.width = video.clientWidth+'px'; canvas.style.height = video.clientHeight+'px'; }
+window.addEventListener('resize', fit);
+
+let dragging=false, sx=0, sy=0, rect=null;
+canvas.addEventListener('pointerdown',(e)=>{ dragging=true; sx=e.offsetX; sy=e.offsetY; });
+canvas.addEventListener('pointermove',(e)=>{ if(!dragging) return; const x=Math.min(sx,e.offsetX), y=Math.min(sy,e.offsetY), w=Math.abs(e.offsetX-sx), h=Math.abs(e.offsetY-sy); rect={x,y,w,h}; draw(); });
+canvas.addEventListener('pointerup',(e)=>{ dragging=false; if(rect){ document.querySelector('input[name=x]').value = Math.round(rect.x); document.querySelector('input[name=y]').value = Math.round(rect.y); document.querySelector('input[name=w]').value = Math.round(rect.w); document.querySelector('input[name=h]').value = Math.round(rect.h); } });
+
+function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); if(rect){ ctx.strokeStyle='#ff0'; ctx.lineWidth=2; ctx.strokeRect(rect.x,rect.y,rect.w,rect.h); } }
+
+// Submit form
+document.getElementById('ws-form').addEventListener('submit', async (e)=>{ e.preventDefault(); const fd=new FormData(e.target); const obj=Object.fromEntries(fd.entries()); obj.x=parseInt(obj.x||0,10); obj.y=parseInt(obj.y||0,10); obj.w=parseInt(obj.w||100,10); obj.h=parseInt(obj.h||100,10); const res = await fetch('/api/workstations/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(obj)}); if(res.ok) location.href='/'; else alert('Error'); });
+</script>
+{% endblock %}

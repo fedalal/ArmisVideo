@@ -1,0 +1,21 @@
+{% extends 'base.html' %} {% block content %}
+<h2>Новая камера</h2>
+<form id="cam-form">
+<label>Имя: <input name="name" required></label><br>
+<label>RTSP: <input name="rtsp_url" style="width:60%" required></label><br>
+<label>Интервал (s): <input type="number" name="poll_interval_s" min="1" value="5"></label><br>
+<label>Вкл: <input type="checkbox" name="enabled" checked></label><br>
+<button type="submit">Создать</button>
+</form>
+<script>
+document.getElementById('cam-form').addEventListener('submit', async (e)=>{
+ e.preventDefault();
+ const fd=new FormData(e.target);
+ const obj=Object.fromEntries(fd.entries());
+ obj.enabled = !!e.target.elements['enabled'].checked;
+ obj.poll_interval_s = parseInt(obj.poll_interval_s||5,10);
+ const res = await fetch('/api/cameras/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(obj)});
+ if(res.ok) location.href='/'; else alert('Ошибка');
+});
+</script>
+{% endblock %}
