@@ -46,7 +46,7 @@ def mjpeg_generator(rtsp_url: str):
                 frame = jpeg.tobytes()
                 yield (b"--frame\r\n"
                        b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n")
-                time.sleep(1)
+                # time.sleep(1)
                 continue
 
             _, jpeg = cv2.imencode(".jpg", frame)

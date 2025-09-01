@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c610058c-b9e3-4349-991e-0cbdce74624f" name="Changes" comment="add camera snapshot and stream" />
+    <list default="true" id="c610058c-b9e3-4349-991e-0cbdce74624f" name="Changes" comment="add some templates to git">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routers/cameras.py" beforeDir="false" afterPath="$PROJECT_DIR$/routers/cameras.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routers/workstations.py" beforeDir="false" afterPath="$PROJECT_DIR$/routers/workstations.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/streamlit_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/streamlit_app.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -117,7 +122,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756630853735</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="add some templates to git">
+      <option name="closed" value="true" />
+      <created>1756631320347</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1756631320347</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -136,6 +149,7 @@
     <MESSAGE value="add gitignore" />
     <MESSAGE value="add tables, all main modules. Add streamlit app" />
     <MESSAGE value="add camera snapshot and stream" />
-    <option name="LAST_COMMIT_MESSAGE" value="add camera snapshot and stream" />
+    <MESSAGE value="add some templates to git" />
+    <option name="LAST_COMMIT_MESSAGE" value="add some templates to git" />
   </component>
 </project>
