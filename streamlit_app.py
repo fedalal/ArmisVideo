@@ -1,11 +1,20 @@
 import streamlit as st
 import requests
+import time
+import cv2
+import numpy as np
+from ultralytics import YOLO
+from io import BytesIO
+from PIL import Image
+
 
 API_URL = "http://192.168.13.89:8005"  # адрес твоего FastAPI
 # API_URL = "http://127.0.0.1:8005"
 st.set_page_config(page_title="Управление камерами и рабочими местами", layout="wide")
 
 st.title("🎥 Управление камерами и рабочими местами")
+
+model = YOLO("yolov10s.pt")
 
 # отключение верхней панели
 st.markdown(
@@ -56,9 +65,10 @@ with tab1:
 
             if not st.session_state[key_state]:
                 # показываем snapshot
+                cachebuster = int(time.time() * 1000)
                 st.markdown(
                     f"""
-                            <img src="{API_URL}/cameras/{cam['id']}/snapshot"
+                            <img src="{API_URL}/cameras/{cam['id']}/snapshot?cachebuster={cachebuster}"
                                  width="640" height="480"
                                  style="border:1px solid #ccc;"/>
                             """,
@@ -170,43 +180,108 @@ with tab2:
                 r = requests.put(f"{API_URL}/workstations/{ws['id']}", json=payload)
                 if r.status_code == 200:
                     st.success("Сохранено ✅")
+                    # после сохранения обновляем картинку
+                    st.session_state[f"ws_snapshot_refresh_{ws['id']}"] = True
                     st.rerun()
                 else:
                     st.error(f"Ошибка: {r.text}")
 
             st.markdown("---")
 
+            # создаём 2 колонки: левая под картинку, правая под кнопку
+            col_img, col_btn = st.columns([1, 2])
+
+            with col_btn:
+                if st.button("🔄 Обновить", key=f"ws_refresh_{ws['id']}"):
+                    st.session_state[f"ws_snapshot_refresh_{ws['id']}"] = True
+                    st.rerun()
+                if st.button("👁 Проверка", key=f"ws_check_{ws['id']}"):
+                    url = f"{API_URL}/workstations/{ws['id']}/snapshot?cb={int(time.time())}"
+                    resp = requests.get(url)
+                    if resp.status_code == 200:
+                        img = Image.open(BytesIO(resp.content)).convert("RGB")
+                        img_np = np.array(img)
+
+                        results = model.predict(img_np)
+
+                        found = False
+                        roi_crop = img_np[
+                                   ws["y"]: ws["y"] + ws["h"],
+                                   ws["x"]: ws["x"] + ws["w"]
+                                   ]
+
+                        for r in results:
+                            for box, cls, conf in zip(r.boxes.xyxy, r.boxes.cls, r.boxes.conf):
+                                if int(cls) == 0:  # класс 0 = "person"
+                                    x1, y1, x2, y2 = map(int, box)
+                                    if (
+                                            x1 >= ws["x"] and y1 >= ws["y"] and
+                                            x2 <= ws["x"] + ws["w"] and
+                                            y2 <= ws["y"] + ws["h"]
+                                    ):
+                                        found = True
+
+                                        # переводим координаты в ROI
+                                        rx1, ry1 = x1 - ws["x"], y1 - ws["y"]
+                                        rx2, ry2 = x2 - ws["x"], y2 - ws["y"]
+
+                                        # confidence в %
+                                        conf_percent = f"{conf.item() * 100:.1f}%"
+
+                                        # рисуем рамку + подпись
+                                        roi_crop = roi_crop.copy()
+                                        cv2.rectangle(
+                                            roi_crop,
+                                            (rx1, ry1),
+                                            (rx2, ry2),
+                                            (0, 255, 0), 2
+                                        )
+                                        cv2.putText(
+                                            roi_crop,
+                                            conf_percent,
+                                            (rx1, max(ry1 - 20, 0)),
+                                            cv2.FONT_HERSHEY_SIMPLEX,
+                                            2,
+                                            (0, 255, 0),
+                                            4
+                                        )
+                                        break
+                            if found:
+                                break
+
+                        if found:
+                            st.success("✅ Человек найден в отмеченной области")
+                        else:
+                            st.warning("❌ Человек не найден в отмеченной области")
+
+                        st.image(roi_crop, caption="Отмеченная область", width=320)
+                    else:
+                        st.error("Ошибка получения snapshot")
+
+            # флаг для обновления изображения
+            refresh_key = f"ws_snapshot_refresh_{ws['id']}"
+            if refresh_key not in st.session_state:
+                st.session_state[refresh_key] = True  # по умолчанию показываем
+
             # 🔹 Управление показом: snapshot или stream
             key_state = f"ws_stream_active_{ws['id']}"
             if key_state not in st.session_state:
                 st.session_state[key_state] = False  # по умолчанию поток выключен
 
-            if not st.session_state[key_state]:
-                # показываем snapshot
-                st.markdown(
-                    f"""
-                                        <img src="{API_URL}/workstations/{ws['id']}/snapshot"
-                                             width="640" height="480"
-                                             style="border:1px solid #ccc;"/>
-                                        """,
-                    unsafe_allow_html=True
-                )
-                if st.button("▶️ Запустить поток", key=f"ws_start_stream_{ws['id']}"):
-                    st.session_state[key_state] = True
-                    st.rerun()
-            else:
-                # показываем stream
-                st.markdown(
-                    f"""
-                                        <img src="{API_URL}/workstations/{ws['id']}/stream"
-                                             width="640" height="480"
-                                             style="border:1px solid #ccc;"/>
-                                        """,
-                    unsafe_allow_html=True
-                )
-                if st.button("⏹ Остановить поток", key=f"ws_stop_stream_{ws['id']}"):
-                    st.session_state[key_state] = False
-                    st.rerun()
+            if st.session_state[refresh_key]:
+                with col_img:
+                    cachebuster = int(time.time() * 1000)
+                    st.markdown(
+                        f"""
+                                <img src="{API_URL}/workstations/{ws['id']}/snapshot?cachebuster={cachebuster}"
+                                     width="640" height="480"
+                                     style="border:1px solid #ccc;"/>
+                                """,
+                        unsafe_allow_html=True
+                    )
+                # сбрасываем, чтобы картинка не грузилась бесконечно заново
+                st.session_state[refresh_key] = False
+
 
 
             # Удаление с подтверждением
