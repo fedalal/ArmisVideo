@@ -21,7 +21,7 @@ class WorkstationCreate(BaseModel):
     y: int
     w: int
     h: int
-
+    enabled: bool
 class WorkstationOut(WorkstationCreate):
     id: int
     model_config = {
@@ -35,6 +35,7 @@ class FrameOut(BaseModel):
     trigger: str
     people_count: int
     thumb_path: Optional[str]
+    conf: int
     model_config = {
         "from_attributes": True
     }

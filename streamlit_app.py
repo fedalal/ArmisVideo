@@ -8,8 +8,8 @@ from io import BytesIO
 from PIL import Image
 
 
-API_URL = "http://192.168.13.89:8005"  # адрес твоего FastAPI
-# API_URL = "http://127.0.0.1:8005"
+# API_URL = "http://192.168.13.89:8005"  # адрес твоего FastAPI
+API_URL = "http://127.0.0.1:8005"
 st.set_page_config(page_title="Управление камерами и рабочими местами", layout="wide")
 
 st.title("🎥 Управление камерами и рабочими местами")
@@ -151,7 +151,10 @@ with tab2:
     camera_options = {cam["id"]: cam["name"] for cam in cameras}
 
     for ws in workstations:
-        with st.expander(f"👷 {ws['name']} "):
+
+        status_icon = "🟢" if ws["enabled"] else "🔴"
+
+        with st.expander(f"👷 {ws['name']} {status_icon}"):
             name = st.text_input("Имя", ws["name"], key=f"ws_name_{ws['id']}")
 
             camera_id = st.selectbox(
@@ -168,6 +171,8 @@ with tab2:
             w = c3.number_input("Ширина", min_value=1, value=int(ws["w"]), step=1, key=f"ws_w_{ws['id']}")
             h = c4.number_input("Высота", min_value=1, value=int(ws["h"]), step=1, key=f"ws_h_{ws['id']}")
 
+            ws_enabled = st.checkbox("Рабочее место используется", value=ws["enabled"], key=f"ws_enabled_{ws['id']}")
+
             if st.button("💾 Сохранить", key=f"ws_save_{ws['id']}"):
                 payload = {
                     "name": name,
@@ -176,6 +181,7 @@ with tab2:
                     "y": int(y),
                     "w": int(w),
                     "h": int(h),
+                    "enabled": ws_enabled
                 }
                 r = requests.put(f"{API_URL}/workstations/{ws['id']}", json=payload)
                 if r.status_code == 200:
@@ -325,6 +331,7 @@ with tab2:
             "y": int(new_y),
             "w": int(new_w),
             "h": int(new_h),
+            "enabled":True
         }
         r = requests.post(f"{API_URL}/workstations", json=payload)
         if r.status_code == 200:

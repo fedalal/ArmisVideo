@@ -22,6 +22,7 @@ class Workstation(Base):
     w = Column(Integer, nullable=False)
     h = Column(Integer, nullable=False)
     camera = relationship('Camera', back_populates='workstations')
+    enabled = Column(Boolean, default=True)
 
 class Frame(Base):
     __tablename__ = "frames"
@@ -31,6 +32,7 @@ class Frame(Base):
     trigger = Column(String(100), nullable=False)
     people_count = Column(Integer, nullable=False, default=0)
     thumb_path = Column(String(1000), nullable=True)
+    conf = Column(Integer, nullable=False, default=0)
 
 class PresenceState(Base):
     __tablename__ = "presence_state"
