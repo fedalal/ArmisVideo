@@ -90,7 +90,7 @@ def process_workstations():
             cv2.imwrite(filepath, roi)
 
             # обновляем запись с путём
-            frame_rec.thumb_path = filename
+            frame_rec.thumb_path = date_folder + '/' +filename
             db.commit()
 
 

@@ -24,10 +24,7 @@ TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), 'templates')
 os.makedirs(TEMPLATES_DIR, exist_ok=True)
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-# serve thumbs directory
-os.makedirs(settings.THUMBNAILS_DIR, exist_ok=True)
-app.mount('/thumbs', StaticFiles(directory=settings.THUMBNAILS_DIR), name='thumbs')
-
+app.mount("/images", StaticFiles(directory="images"), name="images")
 @app.get('/', response_class=HTMLResponse)
 async def index(request: Request):
     with SessionLocal() as db:

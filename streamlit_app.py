@@ -2,11 +2,24 @@ import streamlit as st
 import requests
 import time
 import cv2
+import os
 import numpy as np
 from ultralytics import YOLO
 from io import BytesIO
 from PIL import Image
 
+from sqlalchemy import create_engine
+import pandas as pd
+from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
+from settings import settings
+
+
+# создаём движок SQLAlchemy для PostgreSQL
+engine = create_engine(
+    settings.POSTGRES_DSN,
+    echo=False,           # для отладки SQL-запросов
+    future=True           # использование SQLAlchemy 2.0 style
+)
 
 API_URL = "http://192.168.13.89:8005"  # адрес твоего FastAPI
 # API_URL = "http://127.0.0.1:8005"
@@ -35,7 +48,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-tab1, tab2 = st.tabs(["Камеры", "Рабочие места"])
+tab1, tab2, tab3 = st.tabs(["Камеры", "Рабочие места","Контроль рабочих мест"])
 
 # ----- КАМЕРЫ -----
 with tab1:
@@ -346,4 +359,213 @@ with tab2:
             st.rerun()
         else:
             st.error(f"Ошибка: {r.text}")
+with tab3:
+    st.header("📊 Контроль рабочих мест")
 
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    df_ws = pd.read_sql("select name from workstations order by 1", engine)
+
+
+    with col1:
+        # фильтр по рабочему месту
+        ws_options = ["Все"] + sorted(df_ws["name"].unique().tolist())
+        ws_filter = st.selectbox("Рабочее место", ws_options)
+        ws_condition = ''
+        if ws_filter != "Все":
+            ws_condition =' AND w.name = ' + "'" + ws_filter + "'"
+
+    with col2:
+        # фильтр по дате
+        start_date = st.date_input("Дата начала")
+
+    with col3:
+        # фильтр по дате
+        end_date = st.date_input("Дата окончания")
+
+    with col4:
+        # фильтр по наличию человека
+        found_filter = st.selectbox("Наличие человека", ["Все", "Найден", "Не найден"])
+        people_condition = ''
+        if found_filter == "Найден":
+            people_condition = ' AND f.people_count > 0 '
+        elif found_filter == "Не найден":
+            people_condition = ' AND f.people_count = 0 '
+
+    with col5:
+        # фильтр по проценту
+        conf_min, conf_max = st.slider("Диапазон процента уверенности", 0, 100, (0, 100))
+
+    try:
+
+        query = f"""
+            SELECT f.id,
+                   w.name AS workstation_name,
+                   f.captured_at,
+                   f.people_count,
+                   f.conf,
+                   f.thumb_path
+            FROM frames f
+            LEFT JOIN workstations w ON f.workstation_id = w.id
+            WHERE f.captured_at::date BETWEEN '{start_date.strftime("%Y-%m-%d")}' 
+                                          AND '{end_date.strftime("%Y-%m-%d")}'
+                AND f.conf BETWEEN '{conf_min}' AND '{conf_max}'
+                 {people_condition}
+                 {ws_condition}
+            ORDER BY f.id DESC
+        """
+        df = pd.read_sql(query, engine)
+    except Exception as e:
+        st.error(f"Ошибка подключения к базе: {e}")
+        df = pd.DataFrame()
+
+    if not df.empty:
+        # преобразуем timestamp
+        df["captured_at"] = pd.to_datetime(df["captured_at"])
+
+
+
+
+
+
+
+
+
+
+
+        # переименуем колонки
+        df = df.rename(columns={
+            "workstation_name": "Рабочее место",
+            "trigger" : "Событие",
+            "conf": "Уверенность (%)",
+            "thumb_path": "Миниатюра"
+        })
+
+        # Рендерер для колонки ЛюдейНайдено
+        people_renderer = JsCode("""
+        function(params) {
+            if (!params.value || params.value === 0) {
+                return '❌';
+            } else {
+                let result = '';
+                for (let i = 0; i < params.value; i++) {
+                    result += '✅';
+                }
+                return result;
+            }
+        }
+        """)
+
+        # Рендерер для форматирования даты
+        date_renderer = JsCode("""
+        function(params) {
+            if (!params.value) return '';
+            const dt = new Date(params.value);   // преобразуем строку в JS Date
+            const dd = String(dt.getDate()).padStart(2, '0');
+            const mm = String(dt.getMonth() + 1).padStart(2, '0');
+            const yy = String(dt.getFullYear()).slice(-2);
+            const hh = String(dt.getHours()).padStart(2, '0');
+            const mi = String(dt.getMinutes()).padStart(2, '0');
+            const ss = String(dt.getSeconds()).padStart(2, '0');
+            return `${dd}.${mm}.${yy} ${hh}:${mi}:${ss}`;
+        }
+        """)
+
+        thumbnail_renderer = JsCode("""
+               class ThumbnailRenderer {
+    init(params) {
+        this.eGui = document.createElement('div'); // Create a container div
+        this.eGui.style.display = 'flex'; // Set display to flex
+        this.eGui.style.justifyContent = 'center'; // Center horizontally
+        this.eGui.style.alignItems = 'center'; // Center vertically
+        
+        const eyeIcon = document.createElement('span');
+        // создаём иконку "глаз"
+         eyeIcon.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" width="22" height="22" style="cursor:pointer;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 
+                       4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>`;
+        this.eGui.appendChild(eyeIcon);
+        
+            
+        // Add event listener for click event on the image
+        eyeIcon.addEventListener('click', () => {
+            // Create a modal or popover to display the enlarged image
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            modal.style.display = 'flex';
+            modal.style.justifyContent = 'center';
+            modal.style.alignItems = 'center';
+
+            const enlargedImg = document.createElement('img');
+            enlargedImg.setAttribute('src', '
+            """ + API_URL + """/images/' +params.value);
+            enlargedImg.style.maxWidth = '90%';
+            enlargedImg.style.maxHeight = '90%';
+
+            modal.appendChild(enlargedImg);
+
+            // Close modal when clicking outside the image
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.remove();
+                }
+            });
+
+            document.body.appendChild(modal);
+        });
+    }
+
+    getGui() {
+        return this.eGui;
+    }
+}
+           """)
+
+        # JS для найден/не найден
+        found_renderer = JsCode("""
+        function(params) {
+            return params.value ? "✅" : "❌";
+        }
+        """)
+
+        # итоговая таблица
+        # st.dataframe(df.sort_values(by="ID", ascending=False), width='stretch')
+        gb = GridOptionsBuilder.from_dataframe(df)
+        gb.configure_column("Миниатюра", cellRenderer=thumbnail_renderer)
+        gb.configure_column("id", header_name="ID",  valueGetter=JsCode("function(params) { return parseInt(params.data.id) || params.data.id; }"), type=["numericColumn", "leftAligned"], sortable=True)
+        # Настраиваем колонку "captured_at"
+        gb.configure_column(
+            "captured_at",
+            header_name="Дата/Время",
+            cellRenderer=date_renderer,
+            sortable=True
+        )
+        gb.configure_column(
+            "people_count",  # имя колонки в DataFrame
+            header_name="Людей Найдено",
+            cellRenderer=people_renderer,
+            sortable=True,
+            filter=True
+        )
+
+        grid_options = gb.build()
+
+        AgGrid(df, gridOptions=grid_options,
+               allow_unsafe_jscode=True,
+               enable_enterprise_modules=False,
+               fit_columns_on_grid_load=True,
+               height=600
+               )
+    else:
+        st.info("Нет данных для отображения")

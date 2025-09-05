@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c610058c-b9e3-4349-991e-0cbdce74624f" name="Changes" comment="add detect.py to automatically save detection result for all workplaces">
+    <list default="true" id="c610058c-b9e3-4349-991e-0cbdce74624f" name="Changes" comment="change API_URL">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/detect.py" beforeDir="false" afterPath="$PROJECT_DIR$/detect.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/streamlit_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/streamlit_app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -38,9 +41,15 @@
     "Python.test_yolo.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "master",
-    "ignore.virus.scanning.warn.message": "true"
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Freelancer/Armis/ArmisVideo/images"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Freelancer\Armis\ArmisVideo\images" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="ArmisVideo" />
@@ -153,7 +162,15 @@
       <option name="project" value="LOCAL" />
       <updated>1756983282458</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="change API_URL">
+      <option name="closed" value="true" />
+      <created>1756983426648</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1756983426648</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -176,6 +193,7 @@
     <MESSAGE value="add code for workplaces" />
     <MESSAGE value="update code to detect is human on selected area or not" />
     <MESSAGE value="add detect.py to automatically save detection result for all workplaces" />
-    <option name="LAST_COMMIT_MESSAGE" value="add detect.py to automatically save detection result for all workplaces" />
+    <MESSAGE value="change API_URL" />
+    <option name="LAST_COMMIT_MESSAGE" value="change API_URL" />
   </component>
 </project>
