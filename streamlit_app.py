@@ -41,17 +41,30 @@ st.markdown(
         /* убираем пустое место сверху */
         .block-container {
             padding-top: 1rem; /* по умолчанию ~6rem */
+
         }
+        
     </style>
     
+    <style>
+    div[data-testid="stHorizontalBlock"] div[role="radiogroup"]{
+        flex-direction: row;   /* делаем кнопки в ряд */
+        justify-content: center;
+    }
+    </style>
+
     """,
     unsafe_allow_html=True
 )
 
-tab1, tab2, tab3 = st.tabs(["Камеры", "Рабочие места","Контроль рабочих мест"])
+page = st.radio(
+    "Выберите раздел",
+    ["Камеры", "Рабочие места", "Контроль рабочих мест", "Отчет"],
+    index=3  , horizontal=True # по умолчанию открываем "Отчет"
+)
 
 # ----- КАМЕРЫ -----
-with tab1:
+if page == "Камеры":
     st.header("Список камер")
 
     # загрузка списка камер
@@ -63,43 +76,45 @@ with tab1:
 
     for cam in cameras:
         status_icon = "🟢" if cam["enabled"] else "🔴"
-        with st.expander(f"📷 {cam['name']} {status_icon}"):
+
+        with st.expander(f"📷 {cam['name']} {status_icon}") as cam_exp:
             name = st.text_input("Имя", cam["name"], key=f"name_{cam['id']}")
             rtsp = st.text_input("RTSP", cam["rtsp_url"], key=f"rtsp_{cam['id']}")
             interval = st.number_input("Интервал опроса камеры (сек)",  min_value=1, value=cam["poll_interval_s"], key=f"int_{cam['id']}")
             enabled = st.checkbox("Камера используется", value=cam["enabled"], key=f"enabled_{cam['id']}")
 
             st.markdown("---")
+            # 👇 картинка грузится только если expander открыт
+            if st.session_state.get(f"expander_{cam['id']}", True):
+                # 🔹 Управление показом: snapshot или stream
+                key_state = f"stream_active_{cam['id']}"
+                if key_state not in st.session_state:
+                    st.session_state[key_state] = False  # по умолчанию поток выключен
 
-            # 🔹 Управление показом: snapshot или stream
-            key_state = f"stream_active_{cam['id']}"
-            if key_state not in st.session_state:
-                st.session_state[key_state] = False  # по умолчанию поток выключен
-
-            if not st.session_state[key_state]:
-                # показываем snapshot
-                cachebuster = int(time.time() * 1000)
-                st.markdown(
-                    f"""
-                            <img src="{API_URL}/cameras/{cam['id']}/snapshot?cachebuster={cachebuster}"
-                                 width="640" height="480"
-                                 style="border:1px solid #ccc;"/>
-                            """,
-                    unsafe_allow_html=True
-                )
-                if st.button("▶️ Запустить поток", key=f"start_stream_{cam['id']}"):
-                    st.session_state[key_state] = True
-                    st.rerun()
-            else:
-                # показываем stream
-                st.markdown(
-                    f"""
-                            <img src="{API_URL}/cameras/{cam['id']}/stream"
-                                 width="640" height="480"
-                                 style="border:1px solid #ccc;"/>
-                            """,
-                    unsafe_allow_html=True
-                )
+                if not st.session_state[key_state]:
+                    # показываем snapshot
+                    cachebuster = int(time.time() * 1000)
+                    st.markdown(
+                        f"""
+                                <img src="{API_URL}/cameras/{cam['id']}/snapshot?cachebuster={cachebuster}"
+                                     width="640" height="480"
+                                     style="border:1px solid #ccc;"/>
+                                """,
+                        unsafe_allow_html=True
+                    )
+                    if st.button("▶️ Запустить поток", key=f"start_stream_{cam['id']}"):
+                        st.session_state[key_state] = True
+                        st.rerun()
+                else:
+                    # показываем stream
+                    st.markdown(
+                        f"""
+                                <img src="{API_URL}/cameras/{cam['id']}/stream"
+                                     width="640" height="480"
+                                     style="border:1px solid #ccc;"/>
+                                """,
+                        unsafe_allow_html=True
+                    )
                 if st.button("⏹ Остановить поток", key=f"stop_stream_{cam['id']}"):
                     st.session_state[key_state] = False
                     st.rerun()
@@ -144,7 +159,7 @@ with tab1:
         st.rerun()
 
     # ----- РАБОЧИЕ МЕСТА -----
-with tab2:
+if page == "Рабочие места":
     st.header("Рабочие места")
 
     # загрузка списка рабочих мест
@@ -288,18 +303,20 @@ with tab2:
                 st.session_state[key_state] = False  # по умолчанию поток выключен
 
             if st.session_state[refresh_key]:
-                with col_img:
-                    cachebuster = int(time.time() * 1000)
-                    st.markdown(
-                        f"""
-                                <img src="{API_URL}/workstations/{ws['id']}/snapshot?cachebuster={cachebuster}"
-                                     width="640" height="480"
-                                     style="border:1px solid #ccc;"/>
-                                """,
-                        unsafe_allow_html=True
-                    )
-                # сбрасываем, чтобы картинка не грузилась бесконечно заново
-                st.session_state[refresh_key] = False
+                # 👇 картинка грузится только если expander открыт
+                if st.session_state.get(f"expander_{ws['id']}", True):
+                    with col_img:
+                        cachebuster = int(time.time() * 1000)
+                        st.markdown(
+                            f"""
+                                    <img src="{API_URL}/workstations/{ws['id']}/snapshot?cachebuster={cachebuster}"
+                                         width="640" height="480"
+                                         style="border:1px solid #ccc;"/>
+                                    """,
+                            unsafe_allow_html=True
+                        )
+                    # сбрасываем, чтобы картинка не грузилась бесконечно заново
+                    st.session_state[refresh_key] = False
 
 
 
@@ -359,7 +376,7 @@ with tab2:
             st.rerun()
         else:
             st.error(f"Ошибка: {r.text}")
-with tab3:
+if page == "Контроль рабочих мест":
     st.header("📊 Контроль рабочих мест")
 
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -422,14 +439,6 @@ with tab3:
     if not df.empty:
         # преобразуем timestamp
         df["captured_at"] = pd.to_datetime(df["captured_at"])
-
-
-
-
-
-
-
-
 
 
 
@@ -562,6 +571,147 @@ with tab3:
         grid_options = gb.build()
 
         AgGrid(df, gridOptions=grid_options,
+               allow_unsafe_jscode=True,
+               enable_enterprise_modules=False,
+               fit_columns_on_grid_load=True,
+               height=600
+               )
+    else:
+        st.info("Нет данных для отображения")
+if page == "Отчет":
+    st.header("📊 Отчет по рабочим местам")
+
+    col1, col2, col3= st.columns(3)
+
+    rep_df_ws = pd.read_sql("select name from workstations order by 1", engine)
+
+    with col1:
+        # фильтр по рабочему месту
+        rep_options = ["Все"] + sorted(rep_df_ws["name"].unique().tolist())
+        rep_filter = st.selectbox("Рабочее место", rep_options, key="report_ws")
+        rep_condition = ''
+        if rep_filter != "Все":
+            rep_condition = ' AND w.name = ' + "'" + rep_filter + "'"
+
+    with col2:
+        # фильтр по дате
+        rep_start_date = st.date_input("Дата начала", key="report_start")
+
+    with col3:
+        # фильтр по дате
+        rep_end_date = st.date_input("Дата окончания", key="end")
+
+
+    try:
+
+        query = f"""
+            SELECT f.id,
+                  date_trunc('minute', f.captured_at) AS captured_at,
+                   w.name AS workstation_name,
+                   
+                   f.people_count,
+                   f.conf
+            FROM frames f
+            LEFT JOIN workstations w ON f.workstation_id = w.id
+            WHERE f.captured_at::date BETWEEN '{rep_start_date.strftime("%Y-%m-%d")}' 
+                                          AND '{rep_end_date.strftime("%Y-%m-%d")}'
+                 {rep_condition}
+            ORDER BY workstation_name, f.id 
+        """
+        rep_df = pd.read_sql(query, engine)
+    except Exception as e:
+        st.error(f"Ошибка подключения к базе: {e}")
+        rep_df = pd.DataFrame()
+
+    if not rep_df.empty:
+        # преобразуем timestamp
+        rep_df["captured_at"] = pd.to_datetime(rep_df["captured_at"])
+
+
+
+
+        # переименуем колонки
+        rep_df = rep_df.rename(columns={
+            "trigger": "Событие",
+            "conf": "Уверенность (%)",
+            "thumb_path": "Миниатюра"
+        })
+
+
+
+        # Рендерер для форматирования даты
+        rep_date_renderer = JsCode("""
+        function(params) {
+            if (!params.value) return '';
+            const dt = new Date(params.value);   // преобразуем строку в JS Date
+            const dd = String(dt.getDate()).padStart(2, '0');
+            const mm = String(dt.getMonth() + 1).padStart(2, '0');
+            const yy = String(dt.getFullYear()).slice(-2);
+            const hh = String(dt.getHours()).padStart(2, '0');
+            const mi = String(dt.getMinutes()).padStart(2, '0');
+            const ss = String(dt.getSeconds()).padStart(2, '0');
+            return `${dd}.${mm}.${yy} ${hh}:${mi}`;
+        }
+        """)
+
+
+        rep_df["status"] = rep_df["people_count"].apply(lambda x: "✅ Был" if x > 0 else "❌ Не был")
+
+        # группировка по минутам
+        grouped = rep_df.groupby("captured_at")["status"].apply(
+            lambda s: "✅ Был" if "✅ Был" in s.values else "❌ Не был").reset_index()
+
+        # формируем интервалы
+        report_rows = []
+        current_status = None
+        start_time = None
+
+        for idx, row in grouped.iterrows():
+            if current_status is None:
+                current_status = row["status"]
+                start_time = row["captured_at"]
+            elif row["status"] != current_status:
+                report_rows.append({
+                    "Дата": start_time.strftime("%d.%m.%Y"),
+                    "Время начало": start_time.strftime("%H:%M"),
+                    "Время конец": grouped.loc[idx - 1, "captured_at"].strftime("%H:%M"),
+                    "Продолжительность": f"{int((grouped.iloc[idx --1]['captured_at'] - start_time).total_seconds() // 60)} мин",
+                    "Рабочее место": rep_df["workstation_name"].iloc[0],
+                    "Статус": current_status
+                })
+                current_status = row["status"]
+                start_time = row["captured_at"]
+
+        # добавляем последний интервал
+        if current_status is not None:
+            report_rows.append({
+                "Дата": start_time.strftime("%d.%m.%Y"),
+                "Время начало": start_time.strftime("%H:%M"),
+                "Время конец": grouped.iloc[-1]["captured_at"].strftime("%H:%M"),
+                "Продолжительность": f"{int((grouped.iloc[-1]['captured_at'] - start_time).total_seconds() // 60)} мин",
+                "Рабочее место": rep_df["workstation_name"].iloc[0],
+                "Статус": current_status
+            })
+
+        report_df = pd.DataFrame(report_rows)
+
+        # итоговая таблица
+        rep_gb = GridOptionsBuilder.from_dataframe(report_df)
+
+        # # Настраиваем колонку "captured_at"
+        # rep_gb.configure_column(
+        #     "captured_at",
+        #     header_name="Дата/Время",
+        #     cellRenderer=rep_date_renderer,
+        #     sortable=True
+        # )
+
+
+
+
+        rep_grid_options = rep_gb.build()
+
+        AgGrid(report_df, gridOptions=rep_grid_options,
                allow_unsafe_jscode=True,
                enable_enterprise_modules=False,
                fit_columns_on_grid_load=True,
