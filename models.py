@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey,JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from database import Base
@@ -23,6 +23,7 @@ class Workstation(Base):
     h = Column(Integer, nullable=False)
     camera = relationship('Camera', back_populates='workstations')
     enabled = Column(Boolean, default=True)
+    polygon_points = Column(JSON, nullable=True)  # [{"x":10,"y":20},{"x":40,"y":25}, ...]
 
 class Frame(Base):
     __tablename__ = "frames"

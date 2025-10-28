@@ -7,6 +7,7 @@ from ultralytics import YOLO
 from sqlalchemy.orm import Session
 from database import SessionLocal
 import models
+import json
 
 # загружаем модель
 model = YOLO("yolov10s.pt")
@@ -34,8 +35,45 @@ def process_workstations():
                 print(f"⚠️ Не удалось получить кадр с камеры {camera.name}")
                 continue
 
-            # ROI
-            roi = frame[ws.y:ws.y+ws.h, ws.x:ws.x+ws.w]
+            # === ROI ===
+            polygon = None
+            poly_data = getattr(ws, "polygon_points", None)
+
+            if poly_data:
+                try:
+                    # 1️⃣ если пришло как строка JSON — парсим
+                    if isinstance(poly_data, str):
+                        poly_data = json.loads(poly_data)
+
+                    # 2️⃣ если это список словарей — превращаем в список координат
+                    if isinstance(poly_data, list) and all(isinstance(p, dict) for p in poly_data):
+                        polygon = [[int(p["x"]), int(p["y"])] for p in poly_data]
+
+                    # 3️⃣ если это список списков — используем напрямую
+                    elif isinstance(poly_data, list) and all(isinstance(p, (list, tuple)) for p in poly_data):
+                        polygon = [[int(p[0]), int(p[1])] for p in poly_data]
+
+                    if polygon and len(polygon) >= 3:
+                        pts = np.array(polygon, np.int32)
+
+                        # создаём маску и заполняем полигон
+                        mask = np.zeros(frame.shape[:2], dtype=np.uint8)
+                        cv2.fillPoly(mask, [pts], 255)
+
+                        # накладываем маску
+                        masked = cv2.bitwise_and(frame, frame, mask=mask)
+
+                        # обрезаем по bounding box
+                        x, y, w, h = cv2.boundingRect(pts)
+                        roi = masked[y:y + h, x:x + w]
+                    else:
+                        raise ValueError("polygon_points пуст или некорректен")
+
+                except Exception as e:
+                    print(f"⚠️ Ошибка polygon_points для ws {ws.id}: {e}")
+                    roi = frame[ws.y:ws.y + ws.h, ws.x:ws.x + ws.w]
+            else:
+                roi = frame[ws.y:ws.y + ws.h, ws.x:ws.x + ws.w]
 
             # запускаем модель
             results = model.predict(roi, verbose=False)

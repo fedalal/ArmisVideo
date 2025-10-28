@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Dict
 from datetime import datetime
 
 class CameraCreate(BaseModel):
@@ -22,6 +22,7 @@ class WorkstationCreate(BaseModel):
     w: int
     h: int
     enabled: bool
+    polygon_points: Optional[List[Dict[str, int]]] = None  #
 class WorkstationOut(WorkstationCreate):
     id: int
     model_config = {

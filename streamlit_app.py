@@ -1,17 +1,18 @@
 import streamlit as st
-import requests
-import time
-import cv2
-import os
-import numpy as np
 from ultralytics import YOLO
-from io import BytesIO
-from PIL import Image
-
+import requests
 from sqlalchemy import create_engine
 import pandas as pd
 from st_aggrid import AgGrid, GridOptionsBuilder, JsCode
 from settings import settings
+import streamlit.components.v1 as components
+
+import time
+
+
+
+
+polygon_editor = components.declare_component("polygon_editor", path=".")
 
 
 # создаём движок SQLAlchemy для PostgreSQL
@@ -194,130 +195,207 @@ if page == "Рабочие места":
             )
 
             c1, c2, c3, c4 = st.columns(4)
-            x = c1.number_input("X", min_value=0, value=int(ws["x"]), step=1, key=f"ws_x_{ws['id']}")
-            y = c2.number_input("Y", min_value=0, value=int(ws["y"]), step=1, key=f"ws_y_{ws['id']}")
-            w = c3.number_input("Ширина", min_value=1, value=int(ws["w"]), step=1, key=f"ws_w_{ws['id']}")
-            h = c4.number_input("Высота", min_value=1, value=int(ws["h"]), step=1, key=f"ws_h_{ws['id']}")
+            # x = c1.number_input("X", min_value=0, value=int(ws["x"]), step=1, key=f"ws_x_{ws['id']}")
+            # y = c2.number_input("Y", min_value=0, value=int(ws["y"]), step=1, key=f"ws_y_{ws['id']}")
+            # w = c3.number_input("Ширина", min_value=1, value=int(ws["w"]), step=1, key=f"ws_w_{ws['id']}")
+            # h = c4.number_input("Высота", min_value=1, value=int(ws["h"]), step=1, key=f"ws_h_{ws['id']}")
 
             ws_enabled = st.checkbox("Рабочее место используется", value=ws["enabled"], key=f"ws_enabled_{ws['id']}")
 
+            snapshot_url = f"{API_URL}/workstations/{ws['id']}/snapshot?cb={int(time.time())}"
+
+            session_key = f"poly_points_{ws['id']}"
+            if session_key not in st.session_state:
+                st.session_state[session_key] = ws.get("polygon_points", []) or []
+
+            polygon_points = st.session_state[session_key]
+            # points_json = json.dumps(polygon_points)
+
+            # === HTML с Canvas (без форматных кавычек!) ===
+            import textwrap, json
+
+            html_code = textwrap.dedent("""
+            <div style='display:flex; flex-direction:column; align-items:flex-start;'>
+
+              <!-- Изображение + Canvas -->
+              <div id='wrap_CNT' style='position:relative; display:inline-block;'>
+                <img id='IMG_ID' src='SNAPSHOT_URL'
+                     style='display:block; border:1px solid #ccc; user-select:none; -webkit-user-drag:none;'/>
+                <canvas id='CANVAS_ID'
+                        style='position:absolute; left:0; top:0; pointer-events:auto;'></canvas>
+                <textarea id="json_points" style="width:100%; height:140px; margin-top:10px; font-family:monospace;"></textarea>
+
+              </div>
+
+              <!-- Кнопки под изображением -->
+              <div id='btns_CNT' style='margin-top:10px; display:flex; gap:10px;'>
+                <button id='undo_BTN' type='button' style='padding:6px 10px;'>↩ Удалить последнюю</button>
+                <button id='clear_BTN' type='button' style='padding:6px 10px;'>🧹 Очистить</button>
+                <button id='save_BTN' type='button' style='padding:6px 10px;'>💾 Сохранить отмеченную область</button>
+              </div>
+            </div>
+
+            <script>
+            const img    = document.getElementById('IMG_ID');
+            const canvas = document.getElementById('CANVAS_ID');
+            const ctx    = canvas.getContext('2d');
+            let points   = POINTS_JSON;
+
+            // === подгоняем канвас под реальный размер картинки ===
+            function fitCanvasToImage(){
+              const w = img.clientWidth;
+              const h = img.clientHeight;
+              canvas.width  = w;
+              canvas.height = h;
+              canvas.style.width  = w + 'px';
+              canvas.style.height = h + 'px';
+              draw();
+            }
+            if (img.complete) fitCanvasToImage();
+            else img.addEventListener('load', fitCanvasToImage);
+            window.addEventListener('resize', fitCanvasToImage);
+
+            // === отрисовка ===
+            function draw(){
+              ctx.clearRect(0,0,canvas.width,canvas.height);
+              if (!points || points.length === 0) return;
+
+              if (points.length >= 3){
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let i=1;i<points.length;i++) ctx.lineTo(points[i].x, points[i].y);
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(0,255,0,0.15)';
+                ctx.fill();
+              }
+
+              ctx.strokeStyle = 'lime';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(points[0].x, points[0].y);
+              for (let i=1;i<points.length;i++) ctx.lineTo(points[i].x, points[i].y);
+              if (points.length > 2) ctx.closePath();
+              ctx.stroke();
+
+
+              ctx.fillStyle='lime';
+              ctx.font='12px sans-serif';
+              for (let i=0;i<points.length;i++){
+                const p = points[i];
+                ctx.beginPath();
+                ctx.arc(p.x,p.y,4,0,2*Math.PI);
+                ctx.fill();
+                
+                ctx.font='16px sans-serif';
+                ctx.fillStyle='red';
+                ctx.fillText(i+1, p.x+8, p.y-8);
+                ctx.fillStyle='lime';
+              }
+            }
+
+            // === клики строго внутри канваса ===
+            canvas.addEventListener('click', e=>{
+              const rect = canvas.getBoundingClientRect();
+              const x = e.clientX - rect.left;
+              const y = e.clientY - rect.top;
+              if (x < 0 || y < 0 || x > canvas.width || y > canvas.height) return;
+              points.push({x:Math.round(x), y:Math.round(y)});
+              
+              updateJsonField();
+              draw();
+              
+              
+            });
+
+            // === кнопки ===
+            const undoBtn  = document.getElementById('undo_BTN');
+            const clearBtn = document.getElementById('clear_BTN');
+            const saveBtn  = document.getElementById('save_BTN');
+
+            [undoBtn, clearBtn, saveBtn].forEach(el=>{
+              el.addEventListener('mouseenter', ()=>{ canvas.style.pointerEvents='none'; });
+              el.addEventListener('mouseleave', ()=>{ canvas.style.pointerEvents='auto'; });
+            });
+
+            undoBtn.addEventListener('click', e=>{
+              e.stopPropagation();
+              if (points.length) points.pop();
+              updateJsonField();
+              draw();
+            });
+            clearBtn.addEventListener('click', e=>{
+              e.stopPropagation();
+              points = [];
+              updateJsonField();
+              draw();
+            });
+           
+        
+
+            saveBtn.addEventListener('click', e=>{
+               e.stopPropagation();
+
+            
+              // 2️⃣ визуальный отклик
+              saveBtn.textContent = "✅ Сохранено!";
+              saveBtn.style.background = "#4CAF50";
+              setTimeout(()=>{
+                saveBtn.textContent = "💾 Сохранить отмеченную область";
+                saveBtn.style.background = "";
+              }, 1200);
+            });
+            
+           function updateJsonField(){
+              const txt = document.getElementById("json_points");
+              if (txt) txt.value = JSON.stringify(points, null, 2);
+            }
+
+            
+            
+
+            </script>
+            """)
+
+            # подстановка
+            html_code = (html_code
+                         .replace('IMG_ID', f'img_{ws["id"]}')
+                         .replace('CANVAS_ID', f'canvas_{ws["id"]}')
+                         .replace('undo_BTN', f'undo_{ws["id"]}')
+                         .replace('clear_BTN', f'clear_{ws["id"]}')
+                         .replace('save_BTN', f'save_{ws["id"]}')
+                         .replace('wrap_CNT', f'wrap_{ws["id"]}')
+                         .replace('btns_CNT', f'btns_{ws["id"]}')
+                         .replace('SNAPSHOT_URL', snapshot_url)
+                         .replace('POINTS_JSON', json.dumps(st.session_state[session_key]))
+
+                         )
+            html_code = html_code.replace('poly_WS_ID', f'poly_{ws["id"]}')
+
+            components.html(html_code, height=800, scrolling=True)
+
+
             if st.button("💾 Сохранить", key=f"ws_save_{ws['id']}"):
+
+                polygon_points = st.session_state[session_key]
+                print('polygon points', polygon_points)
+
+
                 payload = {
                     "name": name,
                     "camera_id": int(camera_id),
-                    "x": int(x),
-                    "y": int(y),
-                    "w": int(w),
-                    "h": int(h),
-                    "enabled": ws_enabled
+                    "enabled": ws_enabled,
+                    "polygon_points": []
                 }
-                r = requests.put(f"{API_URL}/workstations/{ws['id']}", json=payload)
-                if r.status_code == 200:
-                    st.success("Сохранено ✅")
-                    # после сохранения обновляем картинку
-                    st.session_state[f"ws_snapshot_refresh_{ws['id']}"] = True
-                    st.rerun()
-                else:
-                    st.error(f"Ошибка: {r.text}")
+                # r = requests.put(f"{API_URL}/workstations/{ws['id']}", json=payload)
+                # if r.status_code == 200:
+                #     st.success("Сохранено ✅")
+                #     # после сохранения обновляем картинку
+                #     st.session_state[f"ws_snapshot_refresh_{ws['id']}"] = True
+                #     st.rerun()
+                # else:
+                #     st.error(f"Ошибка: {r.text}")
 
             st.markdown("---")
-
-            # создаём 2 колонки: левая под картинку, правая под кнопку
-            col_img, col_btn = st.columns([1, 2])
-
-            with col_btn:
-                if st.button("🔄 Обновить", key=f"ws_refresh_{ws['id']}"):
-                    st.session_state[f"ws_snapshot_refresh_{ws['id']}"] = True
-                    st.rerun()
-                if st.button("👁 Проверка", key=f"ws_check_{ws['id']}"):
-                    url = f"{API_URL}/workstations/{ws['id']}/snapshot?cb={int(time.time())}"
-                    resp = requests.get(url)
-                    if resp.status_code == 200:
-                        img = Image.open(BytesIO(resp.content)).convert("RGB")
-                        img_np = np.array(img)
-
-                        results = model.predict(img_np)
-
-                        found = False
-                        roi_crop = img_np[
-                                   ws["y"]: ws["y"] + ws["h"],
-                                   ws["x"]: ws["x"] + ws["w"]
-                                   ]
-
-                        for r in results:
-                            for box, cls, conf in zip(r.boxes.xyxy, r.boxes.cls, r.boxes.conf):
-                                if int(cls) == 0:  # класс 0 = "person"
-                                    x1, y1, x2, y2 = map(int, box)
-                                    if (
-                                            x1 >= ws["x"] and y1 >= ws["y"] and
-                                            x2 <= ws["x"] + ws["w"] and
-                                            y2 <= ws["y"] + ws["h"]
-                                    ):
-                                        found = True
-
-                                        # переводим координаты в ROI
-                                        rx1, ry1 = x1 - ws["x"], y1 - ws["y"]
-                                        rx2, ry2 = x2 - ws["x"], y2 - ws["y"]
-
-                                        # confidence в %
-                                        conf_percent = f"{conf.item() * 100:.1f}%"
-
-                                        # рисуем рамку + подпись
-                                        roi_crop = roi_crop.copy()
-                                        cv2.rectangle(
-                                            roi_crop,
-                                            (rx1, ry1),
-                                            (rx2, ry2),
-                                            (0, 255, 0), 2
-                                        )
-                                        cv2.putText(
-                                            roi_crop,
-                                            conf_percent,
-                                            (rx1, max(ry1 - 20, 0)),
-                                            cv2.FONT_HERSHEY_SIMPLEX,
-                                            2,
-                                            (0, 255, 0),
-                                            4
-                                        )
-                                        break
-                            if found:
-                                break
-
-                        if found:
-                            st.success("✅ Человек найден в отмеченной области")
-                        else:
-                            st.warning("❌ Человек не найден в отмеченной области")
-
-                        st.image(roi_crop, caption="Отмеченная область", width=320)
-                    else:
-                        st.error("Ошибка получения snapshot")
-
-            # флаг для обновления изображения
-            refresh_key = f"ws_snapshot_refresh_{ws['id']}"
-            if refresh_key not in st.session_state:
-                st.session_state[refresh_key] = True  # по умолчанию показываем
-
-            # 🔹 Управление показом: snapshot или stream
-            key_state = f"ws_stream_active_{ws['id']}"
-            if key_state not in st.session_state:
-                st.session_state[key_state] = False  # по умолчанию поток выключен
-
-            if st.session_state[refresh_key]:
-                # 👇 картинка грузится только если expander открыт
-                if st.session_state.get(f"expander_{ws['id']}", True):
-                    with col_img:
-                        cachebuster = int(time.time() * 1000)
-                        st.markdown(
-                            f"""
-                                    <img src="{API_URL}/workstations/{ws['id']}/snapshot?cachebuster={cachebuster}"
-                                         width="640" height="480"
-                                         style="border:1px solid #ccc;"/>
-                                    """,
-                            unsafe_allow_html=True
-                        )
-                    # сбрасываем, чтобы картинка не грузилась бесконечно заново
-                    st.session_state[refresh_key] = False
-
 
 
             # Удаление с подтверждением

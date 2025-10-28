@@ -143,8 +143,8 @@ def get_ws_snapshot(ws_id: int, db: Session = Depends(get_db)):
         return StreamingResponse(buf, media_type="image/jpeg")
 
     # Рисуем красный прямоугольник (x, y, w, h)
-    x, y, w, h = ws.x, ws.y, ws.w, ws.h
-    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+    # x, y, w, h = ws.x, ws.y, ws.w, ws.h
+    # cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
     # Кодируем и возвращаем как JPEG
     _, encoded = cv2.imencode(".jpg", frame)
