@@ -4,14 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c610058c-b9e3-4349-991e-0cbdce74624f" name="Changes" comment="now support polygon selection area">
-      <change afterPath="$PROJECT_DIR$/best_armis_cls_22Nov2025.pt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/last_armis_cls_22Nov2025.pt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="c610058c-b9e3-4349-991e-0cbdce74624f" name="Changes" comment="add new field job_type&#10;Add logic for job_type using yolo_cls model">
       <change beforePath="$PROJECT_DIR$/detect.py" beforeDir="false" afterPath="$PROJECT_DIR$/detect.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/schemas.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/streamlit_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/streamlit_app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,6 +49,7 @@
     "Python.detect.executor": "Run",
     "Python.main.executor": "Run",
     "Python.sort_photos.executor": "Run",
+    "Python.streamlit_app.executor": "Run",
     "Python.test_yolo.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -215,7 +210,15 @@
       <option name="project" value="LOCAL" />
       <updated>1761651471238</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="add new field job_type&#10;Add logic for job_type using yolo_cls model">
+      <option name="closed" value="true" />
+      <created>1763981778045</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1763981778045</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -242,7 +245,8 @@
     <MESSAGE value="add UI to show frames include filters and sortings" />
     <MESSAGE value="add new tab Report. change tabs to checkboxes for fast loading" />
     <MESSAGE value="now support polygon selection area" />
-    <option name="LAST_COMMIT_MESSAGE" value="now support polygon selection area" />
+    <MESSAGE value="add new field job_type&#10;Add logic for job_type using yolo_cls model" />
+    <option name="LAST_COMMIT_MESSAGE" value="add new field job_type&#10;Add logic for job_type using yolo_cls model" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

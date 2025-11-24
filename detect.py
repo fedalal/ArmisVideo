@@ -86,9 +86,11 @@ def process_workstations():
                 for box, cls, conf in zip(r.boxes.xyxy, r.boxes.cls, r.boxes.conf):
                     if int(cls) == 0:  # класс 0 = "person"
 
-                        conf_percent = float(conf.item()) * 100
+                        curr_persent = float(conf.item()) * 100
+                        if curr_persent > conf_percent:
+                            conf_percent = curr_persent
 
-                        if conf > 0.4:
+                        if curr_persent > 50:
                             person_found += 1
                             # рисуем рамку
                             x1, y1, x2, y2 = map(int, box)
