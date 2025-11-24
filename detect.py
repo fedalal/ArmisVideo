@@ -90,6 +90,7 @@ def process_workstations():
                         if curr_persent > conf_percent:
                             conf_percent = curr_persent
 
+
                         if curr_persent > 50:
                             person_found += 1
                             # рисуем рамку
