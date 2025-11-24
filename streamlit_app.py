@@ -499,7 +499,8 @@ if page == "Контроль рабочих мест":
                    f.captured_at,
                    f.people_count,
                    f.conf,
-                   f.thumb_path
+                   f.thumb_path,
+                   f.job_type
             FROM frames f
             LEFT JOIN workstations w ON f.workstation_id = w.id
             WHERE f.captured_at::date BETWEEN '{start_date.strftime("%Y-%m-%d")}' 
@@ -525,7 +526,8 @@ if page == "Контроль рабочих мест":
             "workstation_name": "Рабочее место",
             "trigger" : "Событие",
             "conf": "Уверенность (%)",
-            "thumb_path": "Миниатюра"
+            "thumb_path": "Миниатюра",
+            "job_type": "Активность"
         })
 
         # Рендерер для колонки ЛюдейНайдено

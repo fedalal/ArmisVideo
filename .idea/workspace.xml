@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c610058c-b9e3-4349-991e-0cbdce74624f" name="Changes" comment="add new field job_type&#10;Add logic for job_type using yolo_cls model">
-      <change beforePath="$PROJECT_DIR$/detect.py" beforeDir="false" afterPath="$PROJECT_DIR$/detect.py" afterDir="false" />
+    <list default="true" id="c610058c-b9e3-4349-991e-0cbdce74624f" name="Changes" comment="test update">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/streamlit_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/streamlit_app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,24 +43,24 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.copy_people_frames.executor": "Debug",
-    "Python.cut_green.executor": "Debug",
-    "Python.detect.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.sort_photos.executor": "Run",
-    "Python.streamlit_app.executor": "Run",
-    "Python.test_yolo.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Freelancer/Armis/ArmisVideo",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.copy_people_frames.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.cut_green.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.detect.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.sort_photos.executor&quot;: &quot;Run&quot;,
+    &quot;Python.streamlit_app.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_yolo.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Freelancer/Armis/ArmisVideo&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Freelancer\Armis\ArmisVideo" />
@@ -218,7 +219,23 @@
       <option name="project" value="LOCAL" />
       <updated>1763981778045</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="update detect percent to 50 to correctly detect only working peoples">
+      <option name="closed" value="true" />
+      <created>1763982745265</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1763982745265</updated>
+    </task>
+    <task id="LOCAL-00016" summary="test update">
+      <option name="closed" value="true" />
+      <created>1763983121167</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1763983121167</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -246,7 +263,9 @@
     <MESSAGE value="add new tab Report. change tabs to checkboxes for fast loading" />
     <MESSAGE value="now support polygon selection area" />
     <MESSAGE value="add new field job_type&#10;Add logic for job_type using yolo_cls model" />
-    <option name="LAST_COMMIT_MESSAGE" value="add new field job_type&#10;Add logic for job_type using yolo_cls model" />
+    <MESSAGE value="update detect percent to 50 to correctly detect only working peoples" />
+    <MESSAGE value="test update" />
+    <option name="LAST_COMMIT_MESSAGE" value="test update" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
