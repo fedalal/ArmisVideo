@@ -688,7 +688,8 @@ if page == "Отчет":
                    w.name AS workstation_name,
                    
                    f.people_count,
-                   f.conf
+                   f.conf,
+                   f.job_type
             FROM frames f
             LEFT JOIN workstations w ON f.workstation_id = w.id
             WHERE f.captured_at::date BETWEEN '{rep_start_date.strftime("%Y-%m-%d")}' 
@@ -712,7 +713,8 @@ if page == "Отчет":
         rep_df = rep_df.rename(columns={
             "trigger": "Событие",
             "conf": "Уверенность (%)",
-            "thumb_path": "Миниатюра"
+            "thumb_path": "Миниатюра",
+            "job_type": "Активность",
         })
 
 

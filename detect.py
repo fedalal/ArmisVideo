@@ -11,6 +11,7 @@ import json
 
 # загружаем модель
 model = YOLO("yolov10s.pt")
+model_work = YOLO("last_armis_cls_22Nov2025.pt")
 
 def process_workstations():
     db: Session = SessionLocal()
@@ -80,22 +81,58 @@ def process_workstations():
 
             person_found = 0
             conf_percent = 0.0
+            job_type = 0
             for r in results:
                 for box, cls, conf in zip(r.boxes.xyxy, r.boxes.cls, r.boxes.conf):
                     if int(cls) == 0:  # класс 0 = "person"
-                        person_found += 1
+
                         conf_percent = float(conf.item()) * 100
-                        # рисуем рамку
-                        x1, y1, x2, y2 = map(int, box)
-                        cv2.rectangle(roi, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                        cv2.putText(
-                            roi,
-                            f"{conf_percent:.1f}%",
-                            (x1, max(y1-10, 0)),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            2, (0,255,0), 4
-                        )
-                        # break
+
+                        if conf > 0.4:
+                            person_found += 1
+                            # рисуем рамку
+                            x1, y1, x2, y2 = map(int, box)
+
+                            crop = roi[y1:y2, x1:x2]
+                            cv2.imwrite("test1.jpg", crop)
+                            cls_results = model_work.predict(crop)
+
+                            try:
+                                cr = cls_results[0]
+                                cls_id = int(cr.probs.top1)
+                                cls_name = cr.names[cls_id]
+                                cls_conf = float(cr.probs.top1conf)
+                            except Exception as e:
+                                cls_id = -1
+                                cls_name = ""
+                                cls_conf = 0
+
+
+                            if cls_name == "work_cropped":
+                                job_color = (0, 255, 0)
+                                cur_job_type = 3
+                            elif cls_name == "phone_cropped":
+                                job_color = (0, 0, 255)
+                                cur_job_type = 2
+                            else:
+                                job_color = (255, 0, 0)
+                                cur_job_type = 1
+
+                            if cur_job_type > job_type:
+                                job_type = cur_job_type
+
+                            cv2.rectangle(roi, (x1, y1), (x2, y2), job_color, 2)
+                            cv2.putText(
+                                roi,
+                                f"{conf_percent:.1f}%",
+                                (x1, max(y1-10, 0)),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                2, (0,255,0), 4
+                            )
+
+                            # проверяем, работает человек на вырезанном фрагменте или нет
+
+                            # break
 
             BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # корень проекта (где лежит скрипт)
             images_root = os.path.join(BASE_DIR, "images")  # папка images внутри проекта
@@ -109,7 +146,8 @@ def process_workstations():
                 captured_at=datetime.datetime.now(),
                 trigger="Поиск сотрудников",
                 people_count=person_found,
-                conf=conf_percent
+                conf=conf_percent,
+                job_type = job_type
             )
             db.add(frame_rec)
             db.commit()
@@ -133,7 +171,7 @@ def process_workstations():
 
 
 
-            print(f"💾 Сохранён фрагмент {filepath}, person_found={person_found}")
+            print(f"💾 Сохранён фрагмент {filepath}, person_found={person_found}, job_type={job_type}")
 
     finally:
         db.close()

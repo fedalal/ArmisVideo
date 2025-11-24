@@ -37,6 +37,7 @@ class FrameOut(BaseModel):
     people_count: int
     thumb_path: Optional[str]
     conf: int
+    job_type: int
     model_config = {
         "from_attributes": True
     }

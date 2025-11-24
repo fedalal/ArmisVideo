@@ -34,6 +34,7 @@ class Frame(Base):
     people_count = Column(Integer, nullable=False, default=0)
     thumb_path = Column(String(1000), nullable=True)
     conf = Column(Integer, nullable=False, default=0)
+    job_type = Column(Integer, nullable=False, default=0)
 
 class PresenceState(Base):
     __tablename__ = "presence_state"
