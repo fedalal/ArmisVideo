@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c610058c-b9e3-4349-991e-0cbdce74624f" name="Changes" comment="test update">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/streamlit_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/streamlit_app.py" afterDir="false" />
-    </list>
+    <list default="true" id="c610058c-b9e3-4349-991e-0cbdce74624f" name="Changes" comment="add column job_type to streamlit app" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -94,7 +91,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-164cda30dcd9-0af03a5fa574-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.26830.99" />
+        <option value="bundled-python-sdk-337b0a7a993a-31b6be0877a2-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-241.19416.19" />
       </set>
     </attachedChunks>
   </component>
@@ -235,7 +232,15 @@
       <option name="project" value="LOCAL" />
       <updated>1763983121167</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="add column job_type to streamlit app">
+      <option name="closed" value="true" />
+      <created>1763984575861</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1763984575861</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -265,7 +270,8 @@
     <MESSAGE value="add new field job_type&#10;Add logic for job_type using yolo_cls model" />
     <MESSAGE value="update detect percent to 50 to correctly detect only working peoples" />
     <MESSAGE value="test update" />
-    <option name="LAST_COMMIT_MESSAGE" value="test update" />
+    <MESSAGE value="add column job_type to streamlit app" />
+    <option name="LAST_COMMIT_MESSAGE" value="add column job_type to streamlit app" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

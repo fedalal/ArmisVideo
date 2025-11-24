@@ -395,6 +395,7 @@ if page == "Рабочие места":
                 # else:
                 #     st.error(f"Ошибка: {r.text}")
 
+
             st.markdown("---")
 
 
